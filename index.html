@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="app">
+    <header class="app__header">
+      <h1>QR Code Generator</h1>
+      <p>Paste a link, get a QR code. Everything runs in your browser.</p>
+    </header>
+
+    <!-- ============ LEFT: the controls ============ -->
+    <section class="panel">
+
+      <label class="field">
+        <span class="field__label">Link</span>
+        <input
+          type="text"
+          id="link-input"
+          placeholder="https://example.com"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </label>
+      <p class="hint" id="hint"></p>
+
+      <label class="field">
+        <span class="field__label">Logo in the center <em>(optional)</em></span>
+        <input type="file" id="logo-input" accept="image/*" />
+      </label>
+
+      <button type="button" id="remove-logo" class="btn btn--ghost" hidden>
+        Remove logo
+      </button>
+
+      <div class="downloads">
+        <button type="button" id="download-png" class="btn" disabled>
+          Download PNG
+        </button>
+        <button type="button" id="download-svg" class="btn btn--secondary" disabled>
+          Download SVG
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ============ RIGHT: the live preview ============ -->
+    <section class="preview">
+      <div id="qr-container" class="preview__box"></div>
+      <p class="preview__caption" id="caption">Waiting for a link…</p>
+    </section>
+
+  </main>
+
+  <!-- The QR library. Loaded before app.js so QRCodeStyling exists when we use it. -->
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

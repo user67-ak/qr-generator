@@ -1,0 +1,191 @@
+/* ---------- design tokens: change these to restyle the whole app ---------- */
+:root {
+  --bg:        #f4f5f7;
+  --surface:   #ffffff;
+  --border:    #e2e4e9;
+  --text:      #1a1c20;
+  --text-soft: #6b7280;
+  --accent:    #2563eb;
+  --accent-2:  #1d4ed8;
+  --danger:    #b91c1c;
+  --note:      #92700e;
+  --radius:    12px;
+  --shadow:    0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.05);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 32px 20px 64px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ---------- layout: header on top, two columns underneath ---------- */
+.app {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.app__header {
+  grid-column: 1 / -1;   /* header spans both columns */
+  text-align: center;
+}
+
+.app__header h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.app__header p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+/* on narrow screens, stack the two columns instead */
+@media (max-width: 700px) {
+  .app { grid-template-columns: 1fr; }
+}
+
+/* ---------- cards ---------- */
+.panel,
+.preview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ---------- form fields ---------- */
+.field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.field__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.field__label em {
+  font-weight: 400;
+  font-style: normal;
+  color: var(--text-soft);
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+input[type="text"]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  background: var(--surface);
+}
+
+input[type="file"] {
+  width: 100%;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.hint {
+  margin: -10px 0 16px;
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--note);
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled)  { background: var(--accent-2); }
+.btn:disabled              { opacity: .45; cursor: not-allowed; }
+
+.btn--secondary {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+}
+.btn--secondary:hover:not(:disabled) { background: var(--bg); }
+
+.btn--ghost {
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--danger);
+  background: none;
+  text-decoration: underline;
+}
+.btn--ghost:hover { background: none; }
+
+.downloads {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.downloads .btn { flex: 1; }
+
+/* ---------- preview ---------- */
+.preview__box {
+  display: grid;
+  place-items: center;
+  width: 280px;
+  height: 280px;
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, #eceef1 25%, transparent 25%, transparent 75%, #eceef1 75%),
+    linear-gradient(45deg, #eceef1 25%, transparent 25%, transparent 75%, #eceef1 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;  /* checkerboard = "nothing here yet" */
+}
+
+/* once a QR exists, hide the checkerboard behind it */
+.preview__box.has-qr { background: none; }
+
+.preview__box canvas,
+.preview__box svg { display: block; }
+
+.preview__caption {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-soft);
+  text-align: center;
+  word-break: break-all;
+}
