@@ -5,7 +5,7 @@ step, no data leaves the browser.
 
 ## Run it
 
-Double-click `index.html`. That's it — it's a static site.
+https://user67-ak.github.io/qr-generator/
 
 (The one thing that needs internet is the QR library, loaded from a CDN.)
 
@@ -33,10 +33,6 @@ Double-click `index.html`. That's it — it's a static site.
 QR codes carry redundant data so they still scan when partly damaged. The
 *error correction level* sets how much:
 
-- `L` ≈ 7% recoverable
-- `M` ≈ 15%  ← default here
-- `Q` ≈ 25%
-- `H` ≈ 30%
 
 A center logo **covers** part of the code, which is the same as damage. So
 `app.js` switches to `H` the moment you add a logo, and keeps the logo at 35%
