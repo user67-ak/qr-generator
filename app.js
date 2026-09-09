@@ -41,6 +41,12 @@ const qrCode = new QRCodeStyling({
 let currentLogo = null;   // data-URL string, or null
 let hasRendered = false;  // has the QR been appended to the page yet?
 
+/* The finished image, kept ready as a Blob so the download button never has
+   to wait. See the long comment above saveFile() for why that matters. */
+let pngBlob = null;
+let svgBlob = null;
+let blobToken = 0;   // guards against a slow render finishing after a newer one
+
 /* ---------- 3. Helpers ---------- */
 
 /* People type "example.com", not "https://example.com". A QR pointing at
@@ -72,6 +78,8 @@ function render() {
     container.innerHTML = "";
     container.classList.remove("has-qr");
     hasRendered = false;
+    pngBlob = svgBlob = null;
+    blobToken++;                 // invalidate any render still in flight
     pngBtn.disabled = svgBtn.disabled = true;
     hint.textContent = "";
     caption.textContent = "Waiting for a link…";
@@ -91,7 +99,7 @@ function render() {
     hasRendered = true;
   }
 
-  pngBtn.disabled = svgBtn.disabled = false;
+  refreshBlobs();
   hint.textContent = /^https?:\/\//i.test(url) ? "" : "This isn't a web link — it'll be encoded as plain text.";
   caption.textContent = url;
 }
@@ -130,12 +138,102 @@ removeLogoBtn.addEventListener("click", () => {
   render();
 });
 
+/* ---------- 4b. Saving the image ----------
+
+   We deliberately do NOT use the library's own qrCode.download(). It builds a
+   `data:` URL and clicks a hidden <a download>, and it does that *after* an
+   `await`. Both halves of that break on phones:
+
+     - iOS Safari ignores the `download` attribute on a data: URL, because a
+       data: URL has no filename or origin it can attach a save to. The tap
+       does nothing at all - no file, no error message.
+     - The `await` spends the "user activation" token. Browsers only allow a
+       download while a real tap is still being handled; once you await, the
+       tap is over and mobile browsers quietly drop the request.
+
+   So we fix both: we prepare a real Blob ahead of time (refreshBlobs, below)
+   and the click handler stays fully synchronous. */
+
+/* Regenerate the downloadable Blobs for whatever is currently on screen.
+   getRawData() reuses the canvas that is already drawn, so this is cheap and
+   it does not disturb the preview. */
+function refreshBlobs() {
+  const token = ++blobToken;
+
+  // The buttons stay disabled until the images actually exist. This is the
+  // point of the whole exercise: a tap must never arrive before the Blob is
+  // ready, because then we would have to await inside the click handler and
+  // we would lose the user gesture all over again.
+  pngBlob = svgBlob = null;
+  setDownloadsReady(false);
+
+  Promise.all([qrCode.getRawData("png"), qrCode.getRawData("svg")])
+    .then(([png, svg]) => {
+      if (token !== blobToken) return;   // a newer render has superseded this one
+      pngBlob = png;
+      svgBlob = svg;
+      setDownloadsReady(true);
+    })
+    .catch(() => {
+      if (token === blobToken) caption.textContent = "Couldn't prepare the image for download.";
+    });
+}
+
+function setDownloadsReady(ready) {
+  pngBtn.disabled = svgBtn.disabled = !ready;
+}
+
+/* Hand a Blob to the user. Two routes, because phones and desktops differ:
+
+     - On a phone, the Web Share API opens the native sheet ("Save Image",
+       "Save to Files", AirDrop, ...). This is the only route iOS reliably
+       offers for saving a generated image, so we prefer it when available.
+     - Everywhere else, an object URL on a real <a download> - the ordinary
+       desktop path. An object URL, unlike a data: URL, behaves like a real
+       file, so the download attribute is honoured. */
+function saveFile(blob, filename) {
+  if (!blob) return;   // unreachable while the buttons are readiness-gated
+
+  const file = new File([blob], filename, { type: blob.type });
+
+  // Desktop Chrome also advertises Web Share, but there a share sheet is just
+  // an extra dialog in the way of a download that already works. So we only
+  // reach for it on touch-first devices, which is where the plain download is
+  // the unreliable one. "pointer: coarse" means a finger, not a mouse.
+  const isTouchDevice = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+
+  if (isTouchDevice && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file] }).catch((err) => {
+      // The user tapping "Cancel" rejects with AbortError. That is not a
+      // failure, so only fall back when something actually went wrong.
+      if (err && err.name !== "AbortError") downloadViaLink(blob, filename);
+    });
+    return;
+  }
+
+  downloadViaLink(blob, filename);
+}
+
+function downloadViaLink(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // Freeing the URL immediately can cancel the download in some browsers,
+  // so we give it a moment first.
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 pngBtn.addEventListener("click", () => {
-  qrCode.download({ name: fileNameFor(normalizeUrl(linkInput.value)), extension: "png" });
+  saveFile(pngBlob, fileNameFor(normalizeUrl(linkInput.value)) + ".png");
 });
 
 svgBtn.addEventListener("click", () => {
-  qrCode.download({ name: fileNameFor(normalizeUrl(linkInput.value)), extension: "svg" });
+  saveFile(svgBlob, fileNameFor(normalizeUrl(linkInput.value)) + ".svg");
 });
 
 /* ---------- 5. Start ---------- */
